@@ -3042,9 +3042,40 @@
                 }, { passive: true });
             }
 
+            // Handle touch events for vertical swiping
+            function setupTouchControls() {
+                let startY = 0;
+                let isMoving = false;
+                
+                document.addEventListener('touchstart', function(e) {
+                    if (elements.vrContainer.style.display !== 'block') return;
+                    startY = e.touches[0].clientY;
+                    isMoving = true;
+                }, { passive: true });
+                
+                document.addEventListener('touchmove', function(e) {
+                    if (!isMoving || !state.skyImageLoaded) return;
+                    
+                    const currentY = e.touches[0].clientY;
+                    const deltaY = currentY - startY;
+                    
+                    if (Math.abs(deltaY) > 5) {
+                        const rotationAmount = deltaY > 0 ? state.ROTATION_STEP : -state.ROTATION_STEP;
+                        state.cameraRotation.x = Math.min(Math.max(state.cameraRotation.x + rotationAmount, -80), 80);
+                        elements.mainCamera.setAttribute('rotation', `${state.cameraRotation.x} ${state.cameraRotation.y} ${state.cameraRotation.z}`);
+                        startY = currentY;
+                    }
+                }, { passive: true });
+                
+                document.addEventListener('touchend', function() {
+                    isMoving = false;
+                }, { passive: true });
+            }
+
             // Initialize
             setupImageItemClicks();
             setupDepartmentTabs();
+            setupTouchControls();
             setupTouchControls();
         });
     </script>
