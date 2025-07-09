@@ -2366,7 +2366,7 @@
             </a-assets>
             <a-sky id="main-sky" src="#skybox-placeholder" rotation="0 -90 0"></a-sky>
             <a-entity position="0 1.6 0">
-                <a-camera id="main-camera" look-controls="reverseMouseDrag: false; touchEnabled: true; magicWindowTrackingEnabled: true" wasd-controls="acceleration: 100" rotation="0 0 0">
+                <a-camera id="main-camera" look-controls="reverseMouseDrag: false; touchEnabled: true; magicWindowTrackingEnabled: true; pointerLockEnabled: true" wasd-controls="acceleration: 100" rotation="0 0 0">
                 </a-camera>
             </a-entity>
         </a-scene>
@@ -2408,7 +2408,7 @@
                 skyImageLoaded: false,
                 cameraRotation: { x: 0, y: -90, z: 0 },
                 isTransitioning: false,
-                ROTATION_STEP: 15,
+                ROTATION_STEP: 5,
                 isInVRView: false // Track if we're in VR view
             };
             
@@ -3012,9 +3012,40 @@
                 };
             }
             
+            // Handle touch events for vertical swiping
+            function setupTouchControls() {
+                let startY = 0;
+                let isMoving = false;
+                
+                document.addEventListener('touchstart', function(e) {
+                    if (elements.vrContainer.style.display !== 'block') return;
+                    startY = e.touches[0].clientY;
+                    isMoving = true;
+                }, { passive: true });
+                
+                document.addEventListener('touchmove', function(e) {
+                    if (!isMoving || !state.skyImageLoaded) return;
+                    
+                    const currentY = e.touches[0].clientY;
+                    const deltaY = currentY - startY;
+                    
+                    if (Math.abs(deltaY) > 5) {
+                        const rotationAmount = deltaY > 0 ? state.ROTATION_STEP : -state.ROTATION_STEP;
+                        state.cameraRotation.x = Math.min(Math.max(state.cameraRotation.x + rotationAmount, -80), 80);
+                        elements.mainCamera.setAttribute('rotation', `${state.cameraRotation.x} ${state.cameraRotation.y} ${state.cameraRotation.z}`);
+                        startY = currentY;
+                    }
+                }, { passive: true });
+                
+                document.addEventListener('touchend', function() {
+                    isMoving = false;
+                }, { passive: true });
+            }
+
             // Initialize
             setupImageItemClicks();
             setupDepartmentTabs();
+            setupTouchControls();
         });
     </script>
 </body>
